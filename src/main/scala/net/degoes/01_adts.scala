@@ -259,7 +259,14 @@ object bank {
    *
    * Using only sealed traits and case classes, develop a model of a customer at a bank.
    */
-  type Customer
+  case class Customer(id: Long, firstName: String, lastName: String)
+
+  type Rate = Double
+
+  object AccountType {
+    case class ChecksEnable(currency: Currency) extends AccountType
+    case class InterestEnable(rate: Rate, currency: Currency)
+  }
 
   /**
    * EXERCISE 2
@@ -269,7 +276,12 @@ object bank {
    * against a given currency. Another account type allows the user to earn
    * interest at a given rate for the holdings in a given currency.
    */
-  type AccountType
+  sealed trait Currency
+
+  object Currency {
+    case object DOL extends Currency
+    case object EUR extends Currency
+  }
 
   /**
    * EXERCISE 3
@@ -278,7 +290,9 @@ object bank {
    * account, including details on the type of bank account, holdings, customer
    * who owns the bank account, and customers who have access to the bank account.
    */
-  type Account
+  sealed trait AccountType
+  case class Account(accountType: AccountType, holding: Double, owner: Customer, accessBy: List[Customer])
+
 }
 
 /**
@@ -294,7 +308,11 @@ object portfolio {
    * Using only sealed traits and case classes, develop a model of a stock
    * exchange. Ensure there exist values for NASDAQ and NYSE.
    */
-  type Exchange
+  sealed trait Exchange
+  object Exchange {
+    object NASDAQ extends Exchange
+    object NYSE   extends Exchange
+  }
 
   /**
    * EXERCISE 2
@@ -302,7 +320,11 @@ object portfolio {
    * Using only sealed traits and case classes, develop a model of a currency
    * type.
    */
-  type CurrencyType
+  sealed trait CurrencyType
+  object CurrencyType {
+    case object USD extends CurrencyType
+    case object EUR extends CurrencyType
+  }
 
   /**
    * EXERCISE 3
@@ -310,7 +332,10 @@ object portfolio {
    * Using only sealed traits and case classes, develop a model of a stock
    * symbol. Ensure there exists a value for Apple's stock (APPL).
    */
-  type StockSymbol
+  case class StockSymbol(exchange: Exchange, id: String)
+  object StockSymbol {
+    val APPL = StockSymbol(Exchange.NASDAQ, "APPL")
+  }
 
   /**
    * EXERCISE 4
@@ -318,7 +343,7 @@ object portfolio {
    * Using only sealed traits and case classes, develop a model of a portfolio
    * held by a user of the web application.
    */
-  type Portfolio
+  final case class Portfolio(accountNo: String)
 
   /**
    * EXERCISE 5
@@ -326,7 +351,7 @@ object portfolio {
    * Using only sealed traits and case classes, develop a model of a user of
    * the web application.
    */
-  type User
+  final case class User(name: String, age: Int)
 
   /**
    * EXERCISE 6
@@ -334,7 +359,17 @@ object portfolio {
    * Using only sealed traits and case classes, develop a model of a trade type.
    * Example trade types might include Buy and Sell.
    */
-  type TradeType
+  sealed trait TradeType
+  object TradeType {
+    final case class Buy(what: What)  extends TradeType
+    final case class Sell(what: What) extends TradeType
+  }
+
+  sealed trait What
+  object What {
+    case object Shares extends What
+    case object Put    extends What
+  }
 
   /**
    * EXERCISE 7
@@ -343,5 +378,5 @@ object portfolio {
    * which involves a particular trade type of a specific stock symbol at
    * specific prices.
    */
-  type Trade
+  final case class Trade(tt: TradeType, symbol: Symbol, shares: BigDecimal)
 }
