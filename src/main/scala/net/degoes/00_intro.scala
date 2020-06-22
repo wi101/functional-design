@@ -1,7 +1,9 @@
 package net.degoes
 
 import zio._
+import zio.clock.Clock
 import zio.duration._
+import zio.random.Random
 
 /*
  * INTRODUCTION
@@ -43,11 +45,11 @@ object tour {
       count: Int,
       worker: A => Task[Unit]
     ): Task[Throwable] = {
-      val qworker =
+      val qworker: Task[Nothing] =
         ZIO.uninterruptible {
           for {
-            a <- ZIO.interruptible(queue.take)
-            _ <- worker(a).onError(_ => queue.offer(a))
+            a <- ZIO.interruptible(queue.take)          //this can be interrupted
+            _ <- worker(a).onError(_ => queue.offer(a)) // in case of error we will put back the element to the queue and this will not be interruptible
           } yield ()
         }.forever
 
@@ -70,7 +72,7 @@ object tour {
      * reaches 100 recurrences at that spacing, at which point the schedule
      * will no longer recur.
      */
-    val schedule =
+    val schedule: Schedule[Clock with Random, Any, Product] =
       (Schedule.exponential(10.millis).whileOutput(_ < 60.seconds) andThen
         (Schedule.fixed(60.seconds) && Schedule.recurs(100))).jittered
 

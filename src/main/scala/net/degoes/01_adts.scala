@@ -12,6 +12,18 @@ import java.time.Instant
  * In this section, you'll review basic functional domain modeling.
  */
 
+object ADT {
+  //ADT: any data type composed from sums and products, recursively
+  //case class = product type
+  final case class Person(name: String, age: Int)
+  //sealed trait = sum types
+  sealed trait Color
+  case object Red  extends Color
+  case object Blue extends Color
+  // polymorphic types
+  List[Int]
+}
+
 /**
  * E-COMMERCE - EXERCISE SET 1
  *
@@ -30,7 +42,15 @@ object credit_card {
    *  * Expiration date
    *  * Security code
    */
-  type CreditCard
+  final case class CreditCard(number: BigInt, name: String, expirationDate: java.time.YearMonth, securityCode: Int)
+
+  sealed abstract case class Name private (name: String)
+  object Name {
+    //Smart constructor
+    def fromString(name: String): Option[Name] =
+      if (name.trim.length == 0) None
+      else Some(new Name(name) {})
+  }
 
   /**
    * EXERCISE 2
@@ -40,7 +60,21 @@ object credit_card {
    * or a digital product, such as a book or movie, or access to an event, such
    * as a music concert or film showing.
    */
-  type Product
+  sealed trait Product
+  sealed trait Physical extends Product
+  sealed trait Digital  extends Product
+  sealed trait Event    extends Product
+  object Physical {
+    case object Gallon extends Physical
+    case object Milk   extends Physical
+  }
+  object Digital {
+    case object Book   extends Digital
+    case object Laptop extends Digital
+  }
+  object Event {
+    case object Ticket extends Event
+  }
 
   /**
    * EXERCISE 3
@@ -49,7 +83,13 @@ object credit_card {
    * of a product price, which could be one-time purchase fee, or a recurring
    * fee on some regular interval.
    */
-  type PricingScheme
+  sealed trait PricingScheme {
+    def fee: BigDecimal
+  }
+  object PricingScheme {
+    final case class OneTime(fee: BigDecimal)                                 extends PricingScheme
+    final case class Recurring(fee: BigDecimal, duration: java.time.Duration) extends PricingScheme
+  }
 }
 
 /**
@@ -66,35 +106,93 @@ object events {
    * Refactor the object-oriented data model in this section to a more
    * functional one, which uses only sealed traits and case classes.
    */
-  abstract class Event(val id: Int) {
+//
+//  abstract class Event(val id: Int) {
+//
+//    def time: Instant
+//  }
+//
+//  // Events are either UserEvent (produced by a user) or DeviceEvent (produced by a device),
+//  // please don't extend both it will break code!!!
+//  trait UserEvent extends Event {
+//    def userName: String
+//  }
+//
+//  // Events are either UserEvent (produced by a user) or DeviceEvent (produced by a device),
+//  // please don't extend both it will break code!!!
+//  trait DeviceEvent extends Event {
+//    def deviceId: Int
+//  }
+//
+//  class SensorUpdated(id: Int, val deviceId: Int, val time: Instant, val reading: Option[Double])
+//      extends Event(id)
+//      with DeviceEvent
+//
+//  class DeviceActivated(id: Int, val deviceId: Int, val time: Instant) extends Event(id) with DeviceEvent
+//
+//  class UserPurchase(id: Int, val item: String, val price: Double, val time: Instant, val userName: String)
+//      extends Event(id)
+//      with UserEvent
+//
+//  class UserAccountCreated(id: Int, val userName: String, val time: Instant) extends Event(id) with UserEvent
 
-    def time: Instant
+  /**
+   * Solution 1
+   */
+  //  sealed trait Event
+  //  sealed trait UserEvent   extends Event
+  //  sealed trait DeviceEvent extends Event
+  //
+  //  object UserEvent {
+  //    final case class SensorUpdated(id: Int, deviceId: Int, time: Instant, reading: Option[Double]) extends UserEvent
+  //    final case class UserPurchase(id: Int, item: String, price: Double, time: Instant, userName: String)
+  //        extends UserEvent
+  //    final case class UserAccountCreated(id: Int, userName: String, time: Instant) extends UserEvent
+  //  }
+  //
+  //  object DeviceEvent {
+  //    final case class SensorUpdated(id: Int, deviceId: Int, time: Instant, reading: Option[Double]) extends DeviceEvent
+  //    final case class DeviceActivated(id: Int, deviceId: Int, time: Instant)                        extends DeviceEvent
+  //  }
+
+  /**
+   * Solution 2: I like it
+   */
+//  final case class Event(id: Int, time: Instant, event: EventType)
+//
+//  sealed trait EventType
+//  sealed trait UserEvent   extends EventType
+//  sealed trait DeviceEvent extends EventType
+//  object UserEvent {
+//    final case class UserPurchase(item: String, price: Double, userName: String) extends UserEvent
+//    final case class UserAccountCreated(userName: String)                        extends UserEvent
+//  }
+//  object DeviceEvent {
+//    final case class SensorUpdated(deviceId: Int, reading: Option[Double]) extends DeviceEvent
+//    final case class DeviceActivated(deviceId: Int, time: Instant)         extends DeviceEvent
+//  }
+
+  /**
+   * Solution 3: the same as 2 but more ADTs
+   */
+  final case class Event(id: Int, time: Instant, body: Payload)
+
+  sealed trait Payload
+  final case class UserEvent(userName: String) extends Payload
+
+  sealed trait UserPayload
+  object UserPayload {
+    final case class Purchase(item: String, price: Double) extends UserPayload
+    case object AccountCreated                             extends UserPayload
   }
 
-  // Events are either UserEvent (produced by a user) or DeviceEvent (produced by a device),
-  // please don't extend both it will break code!!!
-  trait UserEvent extends Event {
-    def userName: String
+  final case class DeviceEvent(deviceId: Int, devicePayload: DevicePayload) extends Payload
+
+  sealed trait DevicePayload
+  object DevicePayload {
+    final case class SensorUpdated(reading: Option[Double]) extends DevicePayload
+    case object DeviceActivated                             extends DevicePayload
   }
-
-  // Events are either UserEvent (produced by a user) or DeviceEvent (produced by a device),
-  // please don't extend both it will break code!!!
-  trait DeviceEvent extends Event {
-    def deviceId: Int
-  }
-
-  class SensorUpdated(id: Int, val deviceId: Int, val time: Instant, val reading: Option[Double])
-      extends Event(id)
-      with DeviceEvent
-
-  class DeviceActivated(id: Int, val deviceId: Int, val time: Instant) extends Event(id) with DeviceEvent
-
-  class UserPurchase(id: Int, val item: String, val price: Double, val time: Instant, val userName: String)
-      extends Event(id)
-      with UserEvent
-
-  class UserAccountCreated(id: Int, val userName: String, val time: Instant) extends Event(id) with UserEvent
-
 }
 
 /**
@@ -114,7 +212,7 @@ object documents {
    * Using only sealed traits and case classes, create a simplified but somewhat
    * realistic model of a Document.
    */
-  type Document
+  final case class Document(ownerId: UserId, docId: DocId, content: DocContent)
 
   /**
    * EXERCISE 2
@@ -123,7 +221,20 @@ object documents {
    * type that a given user might have with respect to a document. For example,
    * some users might have read-only permission on a document.
    */
-  type AccessType
+  sealed trait AccessType { self =>
+    import AccessType._
+    def includeRead: Boolean =
+      self match {
+        case Read | ReadWrite => true
+        case _                => false
+      }
+  }
+  object AccessType {
+    case object None      extends AccessType
+    case object Read      extends AccessType
+    case object Write     extends AccessType
+    case object ReadWrite extends AccessType
+  }
 
   /**
    * EXERCISE 3
@@ -132,7 +243,8 @@ object documents {
    * permissions that a user has on a set of documents they have access to.
    * Do not store the document contents themselves in this model.
    */
-  type DocPermissions
+  final case class DocPermissions(user: UserId, doc: DocId, accessType: Set[AccessType])
+
 }
 
 /**
