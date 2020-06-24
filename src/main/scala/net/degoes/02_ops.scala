@@ -1,6 +1,5 @@
 package net.degoes
 
-import com.sun.xml.internal.bind.v2.model.annotation.Quick
 import java.io.BufferedInputStream
 import scala.util.Try
 

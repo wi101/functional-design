@@ -21,7 +21,7 @@ object ADT {
   case object Red  extends Color
   case object Blue extends Color
   // polymorphic types
-  List[Int]
+  // List[Int]
 }
 
 /**
